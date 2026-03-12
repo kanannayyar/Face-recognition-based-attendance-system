@@ -192,7 +192,7 @@
 
     <img id="cameraFeed" src="" class="w-full h-full object-cover rounded-xl hidden">
 
-    <div id="cameraPlaceholder" class="text-gray-400 text-center">
+    <div id="cameraPlaceholder" class="text-gray-400 text-center flex flex-col items-center">
         <p class="text-lg">Camera is off</p>
 
         <p class="text-sm">Click Start Camera</p>
@@ -257,7 +257,7 @@ function toggleCamera(){
 
         video.classList.add("hidden");
 
-        placeholder.style.display = "flex";
+        placeholder.style.display = "block";
 
         button.innerText = "Start Camera";
 
