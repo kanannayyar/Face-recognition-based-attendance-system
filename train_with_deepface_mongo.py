@@ -15,9 +15,6 @@ faces_collection = db["faces"]
 # Dataset path
 dataset_path = "face_dataset"
 
-# Clear previous embeddings
-faces_collection.delete_many({})
-print("[INFO] Old embeddings removed from MongoDB.")
 
 # ---------------------------
 # Loop through dataset users
@@ -29,44 +26,36 @@ for user_name in os.listdir(dataset_path):
     if not os.path.isdir(user_folder):
         continue
 
-    print(f"\n[INFO] Processing user: {user_name}")
+    # ✅ CHECK IF USER ALREADY EXISTS
+    existing_user = faces_collection.find_one({"user_name": user_name})
+
+    if existing_user:
+        print(f"[SKIPPED] {user_name} already exists in DB")
+        continue
+
+    print(f"\n[INFO] Processing NEW user: {user_name}")
 
     user_embeddings = []
 
-    # ---------------------------
-    # Process all images of user
-    # ---------------------------
-    for file in os.listdir(user_folder):
+    # 🔹 LOOP THROUGH IMAGES
+    for img_name in os.listdir(user_folder):
 
-        if not file.lower().endswith((".jpg", ".jpeg", ".png")):
-            continue
-
-        img_path = os.path.join(user_folder, file)
+        img_path = os.path.join(user_folder, img_name)
 
         try:
-
-            embedding_obj = DeepFace.represent(
+            result = DeepFace.represent(
                 img_path=img_path,
                 model_name="Facenet",
                 enforce_detection=False
             )
 
-            embedding = embedding_obj[0]["embedding"]
-
-            # Normalize embedding (important for similarity comparison)
-            embedding = np.array(embedding)
-            embedding = embedding / np.linalg.norm(embedding)
-
-            user_embeddings.append(embedding.tolist())
-
-            print(f"✔ Processed {file}")
+            embedding = result[0]["embedding"]
+            user_embeddings.append(embedding)
 
         except Exception as e:
-            print(f"❌ Skipped {file} : {e}")
+            print(f"[ERROR] {img_name} skipped: {e}")
 
-    # ---------------------------
-    # Store user embeddings
-    # ---------------------------
+    # ✅ INSERT ONLY IF EMBEDDINGS FOUND
     if len(user_embeddings) > 0:
 
         faces_collection.insert_one({
@@ -76,11 +65,11 @@ for user_name in os.listdir(dataset_path):
             "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
         })
 
-        print(f"✅ Stored {len(user_embeddings)} embeddings for {user_name}")
+        print(f"[SAVED] {user_name} added with {len(user_embeddings)} embeddings")
 
     else:
-        print(f"⚠ No valid images found for {user_name}")
-
+        print(f"[WARNING] No valid images for {user_name}")
+        
 # ---------------------------
 # Training Complete
 # ---------------------------
