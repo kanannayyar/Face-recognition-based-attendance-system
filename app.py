@@ -265,6 +265,23 @@ def stop_camera():
 
     return "Camera stopped"
 
+@app.route("/get_recognition")
+def get_recognition():
+    global last_name, last_similarity, last_seen_time
+
+    if last_name and time.time() - last_seen_time < 10:
+
+        doc = faces_collection.find_one({"user_name": last_name})
+
+        return {
+            "status": "success",
+            "name": doc.get("name", last_name),
+            "rollno": doc.get("rollno", ""),
+            "branch": doc.get("branch", ""),
+            "similarity": round(last_similarity, 2)
+        }
+
+    return {"status": "waiting"}
 
 # ---------------- RUN SERVER ----------------
 
