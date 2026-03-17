@@ -7,6 +7,9 @@ from datetime import datetime
 import csv
 import os
 import time
+print("[INFO] Loading FaceNet model...")
+DeepFace.build_model("Facenet")
+print("[INFO] Model loaded successfully!")
 
 app = Flask(__name__)
 app.secret_key = "secret123"
