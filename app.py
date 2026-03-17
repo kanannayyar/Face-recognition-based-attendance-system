@@ -20,7 +20,8 @@ face_cascade = cv2.CascadeClassifier(
 )
 
 # ---------------- DATABASE ----------------
-client = MongoClient("mongodb://localhost:27017/")
+# client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb+srv://kananworks9_db_user:9rhFxzqwWhV9M3GO@cluster0.nd5mgtz.mongodb.net/?appName=Cluster0",tls=True,tlsAllowInvalidCertificates=True)
 db = client["face_attendance"]
 faces_collection = db["faces"]
 
