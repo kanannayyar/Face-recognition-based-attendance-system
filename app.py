@@ -7,6 +7,7 @@ from datetime import datetime
 import csv
 import os
 import time
+import bcrypt
 print("[INFO] Loading FaceNet model...")
 DeepFace.build_model("Facenet")
 print("[INFO] Model loaded successfully!")
@@ -27,6 +28,7 @@ face_cascade = cv2.CascadeClassifier(
 client = MongoClient("mongodb+srv://kananworks9_db_user:9rhFxzqwWhV9M3GO@cluster0.nd5mgtz.mongodb.net/?appName=Cluster0",tls=True,tlsAllowInvalidCertificates=True)
 db = client["face_attendance"]
 faces_collection = db["faces"]
+faculty_collection = db["faculty"]
 
 SIMILARITY_THRESHOLD = 0.45
 
@@ -211,26 +213,37 @@ def home():
     if "user" not in session:
         return redirect("/login")
 
-    return render_template("dashboard.html")
+    return render_template(
+        "dashboard.html",
+        faculty_name=session.get("name"),
+        department=session.get("department"),
+        designation=session.get("designation")
+    )
 
 
-@app.route("/login",methods=["GET","POST"])
+@app.route("/login", methods=["GET","POST"])
 def login():
 
-    if request.method=="POST":
+    if request.method == "POST":
 
-        email=request.form["email"]
-        password=request.form["password"]
+        email = request.form["email"]
+        password = request.form["password"]
 
-        if email=="admin@gmail.com" and password=="12345":
+        # 🔍 find user by email
+        user = faculty_collection.find_one({"email": email})
 
-            session["user"]=email
-            return redirect("/")
+        if user:
+            stored_password = user["password"]
 
-        if email=="kanannayyar9@gmail.com" and password=="09211":
+            # ✅ compare hashed password
+            if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
 
-            session["user"]=email
-            return redirect("/")
+                session["user"] = email
+                session["name"] = user.get("name", "")
+                session["department"] = user.get("department", "")
+                session["designation"] = user.get("designation", "")
+
+                return redirect("/")
 
         return "Invalid Credentials"
 
