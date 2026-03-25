@@ -296,6 +296,21 @@ def get_recognition():
 
     return {"status": "waiting"}
 
+@app.route("/get_filters")
+def get_filters():
+
+    branches = faces_collection.distinct("branch")
+    batches = faces_collection.distinct("batch")
+    groups = faces_collection.distinct("group")
+    semesters = faces_collection.distinct("semester")
+
+    return {
+        "branches": branches,
+        "batches": batches,
+        "groups": groups,
+        "semesters": semesters
+    }
+
 # ---------------- RUN SERVER ----------------
 
 if __name__=="__main__":

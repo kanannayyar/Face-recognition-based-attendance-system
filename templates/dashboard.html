@@ -112,6 +112,92 @@
 </header>
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- CLASS SELECTION BAR -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between mb-6">
+
+    <!-- LEFT TEXT -->
+    <div class="text-gray-600 font-semibold">
+        CLASS SELECTION:
+    </div>
+
+    <!-- DROPDOWNS -->
+    <div class="flex items-center gap-3">
+
+        <div class="relative">
+
+    <select id="branchSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Branch</option>
+    </select>
+
+    <!-- Custom Arrow -->
+    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 9l-7 7-7-7"></path>
+                    </svg>
+    </div>
+
+</div>
+
+<div class="relative">
+
+    <select id="semesterSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Branch</option>
+    </select>
+
+    <!-- Custom Arrow -->
+    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 9l-7 7-7-7"></path>
+                    </svg>
+    </div>
+
+</div>
+
+<div class="relative">
+
+    <select id="batchSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Branch</option>
+    </select>
+
+    <!-- Custom Arrow -->
+    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 9l-7 7-7-7"></path>
+                    </svg>
+    </div>
+
+</div>
+
+<div class="relative">
+
+    <select id="groupSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Branch</option>
+    </select>
+
+    <!-- Custom Arrow -->
+    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 9l-7 7-7-7"></path>
+                    </svg>
+    </div>
+
+</div>
+    </div>
+
+    <!-- RIGHT SIDE LABEL -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+        CSE - Sem 1 - Section A - Group A
+    </div>
+
+</div>
         
         <!-- Stats Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -344,6 +430,46 @@ setInterval(() => {
             updateRecognitionUI(data);
         });
 }, 1000);
+
+//update class labels
+const selects = document.querySelectorAll("select");
+const label = document.querySelector(".bg-gradient-to-r");
+
+function updateLabel() {
+    const values = Array.from(selects).map(s => s.value);
+    label.innerText = values.join(" - ");
+}
+
+selects.forEach(s => s.addEventListener("change", updateLabel));
+
+async function loadFilters() {
+
+    const res = await fetch("/get_filters");
+    const data = await res.json();
+
+    const branch = document.getElementById("branchSelect");
+    const batch = document.getElementById("batchSelect");
+    const group = document.getElementById("groupSelect");
+    const semester = document.getElementById("semesterSelect");
+
+    // helper function
+    function fillDropdown(select, items, label){
+        select.innerHTML = `<option value="">Select ${label}</option>`;
+        items.forEach(item => {
+            select.innerHTML += `<option value="${item}">${item}</option>`;
+        });
+    }
+
+    fillDropdown(branch, data.branches, "Branch");
+    fillDropdown(batch, data.batches, "Batch");
+    fillDropdown(group, data.groups, "Group");
+    fillDropdown(semester, data.semesters, "Semester");
+}
+
+// call on page load
+loadFilters();
+
+
 </script>
 
 </body>
