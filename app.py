@@ -59,21 +59,9 @@ def set_filters():
     return {"status": "ok"}
 
 # ---------------- LOAD EMBEDDINGS ----------------
-def load_embeddings():
+def load_embeddings(filters=None):
 
-    query = {}
-
-    if session.get("branch"):
-        query["branch"] = session["branch"]
-
-    if session.get("batch"):
-        query["batch"] = session["batch"]
-
-    if session.get("group"):
-        query["group"] = session["group"]
-
-    if session.get("semester"):
-        query["semester"] = session["semester"]
+    query = filters if filters else {}
 
     docs = list(faces_collection.find(query, {"_id":0}))
 
@@ -82,20 +70,31 @@ def load_embeddings():
 
     for doc in docs:
         user = doc["user_name"]
-
         for emb in doc["embeddings"]:
             names.append(user)
             embeddings.append(np.array(emb))
 
-    print(f"[INFO] Loaded {len(embeddings)} filtered embeddings")
-
+    print(f"[INFO] Loaded {len(embeddings)} embeddings")
     return names, embeddings
 
 
 @app.route("/reload_embeddings", methods=["POST"])
 def reload_embeddings():
     global names, embeddings
-    names, embeddings = load_embeddings()
+
+    filters = {}
+
+    if session.get("branch"):
+        filters["branch"] = session["branch"]
+    if session.get("batch"):
+        filters["batch"] = session["batch"]
+    if session.get("group"):
+        filters["group"] = session["group"]
+    if session.get("semester"):
+        filters["semester"] = session["semester"]
+
+    names, embeddings = load_embeddings(filters)
+
     return {"status": "reloaded"}
 
 # ---------------- SIMILARITY ----------------
@@ -174,7 +173,7 @@ def gen_frames():
             frame_count += 1
 
             # run recognition every 30 frames
-            if frame_count % 30 == 0:
+            if frame_count % 60 == 0:
 
                 name,sim = recognize_face(face_img)
 

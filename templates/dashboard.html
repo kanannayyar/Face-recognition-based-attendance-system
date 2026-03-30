@@ -471,10 +471,10 @@ loadFilters();
 
 async function applyFilters() {
     const data = {
-        branch: document.getElementById("branch").value,
-        batch: document.getElementById("batch").value,
-        group: document.getElementById("group").value,
-        semester: document.getElementById("semester").value
+        branch: document.getElementById("branchSelect").value,
+        batch: document.getElementById("batchSelect").value,
+        group: document.getElementById("groupSelect").value,
+        semester: document.getElementById("semesterSelect").value
     };
 
     await fetch("/set_filters", {
@@ -485,6 +485,12 @@ async function applyFilters() {
 
     await fetch("/reload_embeddings", { method: "POST" });
 }
+selects.forEach(s => {
+    s.addEventListener("change", () => {
+        updateLabel();
+        applyFilters();   // 🔥 important
+    });
+});
 
 
 </script>
