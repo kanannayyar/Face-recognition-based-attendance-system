@@ -47,27 +47,56 @@ if not os.path.exists(attendance_file):
         writer = csv.writer(f)
         writer.writerow(["user_name","date","time","similarity"])
 
+@app.route("/set_filters", methods=["POST"])
+def set_filters():
+    data = request.json
+
+    session["branch"] = data.get("branch")
+    session["batch"] = data.get("batch")
+    session["group"] = data.get("group")
+    session["semester"] = data.get("semester")
+
+    return {"status": "ok"}
+
 # ---------------- LOAD EMBEDDINGS ----------------
 def load_embeddings():
 
-    docs = list(faces_collection.find({}, {"_id":0}))
+    query = {}
+
+    if session.get("branch"):
+        query["branch"] = session["branch"]
+
+    if session.get("batch"):
+        query["batch"] = session["batch"]
+
+    if session.get("group"):
+        query["group"] = session["group"]
+
+    if session.get("semester"):
+        query["semester"] = session["semester"]
+
+    docs = list(faces_collection.find(query, {"_id":0}))
 
     names = []
     embeddings = []
 
     for doc in docs:
-
         user = doc["user_name"]
 
         for emb in doc["embeddings"]:
             names.append(user)
             embeddings.append(np.array(emb))
 
-    print(f"[INFO] Loaded {len(embeddings)} embeddings")
+    print(f"[INFO] Loaded {len(embeddings)} filtered embeddings")
 
     return names, embeddings
 
-names, embeddings = load_embeddings()
+
+@app.route("/reload_embeddings", methods=["POST"])
+def reload_embeddings():
+    global names, embeddings
+    names, embeddings = load_embeddings()
+    return {"status": "reloaded"}
 
 # ---------------- SIMILARITY ----------------
 def cosine_similarity(a,b):

@@ -469,6 +469,23 @@ async function loadFilters() {
 // call on page load
 loadFilters();
 
+async function applyFilters() {
+    const data = {
+        branch: document.getElementById("branch").value,
+        batch: document.getElementById("batch").value,
+        group: document.getElementById("group").value,
+        semester: document.getElementById("semester").value
+    };
+
+    await fetch("/set_filters", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    await fetch("/reload_embeddings", { method: "POST" });
+}
+
 
 </script>
 
