@@ -194,7 +194,7 @@
 
     <!-- RIGHT SIDE LABEL -->
     <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
-        CSE - Sem 1 - Section A - Group A
+        - - - - 
     </div>
 
 </div>
@@ -230,7 +230,7 @@
                 <div class="relative flex justify-between items-start">
                     <div>
                         <h3 class="text-green-100 text-sm font-medium mb-2">Total Students</h3>
-                        <p class="stat-number text-white text-5xl font-bold">8</p>
+                        <p id="totalStudents" class="stat-number text-white text-5xl font-bold">0</p>
                     </div>
                     <div class="icon-wrapper w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -468,6 +468,7 @@ async function loadFilters() {
 
 // call on page load
 loadFilters();
+loadTotalStudents(); 
 
 async function applyFilters() {
     const data = {
@@ -484,6 +485,7 @@ async function applyFilters() {
     });
 
     await fetch("/reload_embeddings", { method: "POST" });
+    loadTotalStudents(); 
 }
 selects.forEach(s => {
     s.addEventListener("change", () => {
@@ -492,6 +494,12 @@ selects.forEach(s => {
     });
 });
 
+async function loadTotalStudents() {
+    const res = await fetch("/get_total_students");
+    const data = await res.json();
+
+    document.getElementById("totalStudents").innerText = data.total;
+}
 
 </script>
 

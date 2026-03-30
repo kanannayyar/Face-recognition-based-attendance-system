@@ -339,6 +339,25 @@ def get_filters():
         "semesters": semesters
     }
 
+@app.route("/get_total_students")
+def get_total_students():
+
+    query = {}
+
+    # apply same filters
+    if session.get("branch"):
+        query["branch"] = session["branch"]
+    if session.get("batch"):
+        query["batch"] = session["batch"]
+    if session.get("group"):
+        query["group"] = session["group"]
+    if session.get("semester"):
+        query["semester"] = session["semester"]
+
+    count = faces_collection.count_documents(query)
+
+    return {"total": count}
+
 # ---------------- RUN SERVER ----------------
 
 if __name__=="__main__":
