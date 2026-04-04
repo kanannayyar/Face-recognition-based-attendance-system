@@ -203,9 +203,10 @@
     </div>
 
     <!-- RIGHT SIDE LABEL -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
-        - - - - 
-    </div>
+    <div id="classBadge"
+class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+    - - - -
+</div>
 
 </div>
         
@@ -443,20 +444,25 @@ setInterval(() => {
 
 //update class labels
 const selects = document.querySelectorAll("select");
-const label = document.querySelector(".bg-gradient-to-r");
 
-function updateLabel() {
+function updateBadge() {
+
     const branch = document.getElementById("branchSelect").value;
     const sem = document.getElementById("semesterSelect").value;
     const batch = document.getElementById("batchSelect").value;
     const group = document.getElementById("groupSelect").value;
 
-    const values = [branch, sem, batch, group].filter(v => v);
+    const badge = document.getElementById("classBadge");
 
-    label.innerText = values.length ? values.join(" - ") : "----";
+    if (!branch && !sem && !batch && !group) {
+        badge.textContent = "- - - -";
+        return;
+    }
+
+    badge.textContent = `${branch || "--"} • ${sem || "--"} • ${batch || "--"} • ${group || "--"}`;
 }
 
-selects.forEach(s => s.addEventListener("change", updateLabel));
+selects.forEach(s => s.addEventListener("change", updateBadge));
 
 async function loadFilters() {
 
@@ -468,28 +474,35 @@ async function loadFilters() {
     const group = document.getElementById("groupSelect");
     const semester = document.getElementById("semesterSelect");
 
-    function fillDropdown(select, items, selectedValue, labelName) {
-        select.innerHTML = `<option value="">Select ${labelName}</option>`;
+    const selected = {
+        branch: "{{ selected_branch }}",
+        batch: "{{ selected_batch }}",
+        group: "{{ selected_group }}",
+        semester: "{{ selected_semester }}"
+    };
 
-        items.forEach(item => {
-            const opt = document.createElement("option");
-            opt.value = item;
-            opt.textContent = item;
+    function fill(select, items, key, label) {
+    select.innerHTML = `<option value="">Select ${label}</option>`;
 
-            if (item === selectedValue) {
-                opt.selected = true;
-            }
+    items.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item;
+        opt.textContent = item;
 
-            select.appendChild(opt);
-        });
-    }
+        if (item === selected[key]) {
+            opt.selected = true;
+        }
 
-    fillDropdown(branch, data.branches, "{{ selected_branch }}", "Branch");
-    fillDropdown(batch, data.batches, "{{ selected_batch }}", "Batch");
-    fillDropdown(group, data.groups, "{{ selected_group }}", "Group");
-    fillDropdown(semester, data.semesters, "{{ selected_semester }}", "Semester");
+        select.appendChild(opt);
+    });
+}
 
-    updateLabel(); // ✅ VERY IMPORTANT
+    fill(branch, data.branches, "branch", "Branch");
+    fill(batch, data.batches, "batch", "Batch");
+    fill(group, data.groups, "group", "Group");
+    fill(semester, data.semesters, "semester", "Semester");
+
+    updateBadge(); // ⭐ IMPORTANT
 }
 
 // call on page load
@@ -513,10 +526,13 @@ async function applyFilters() {
     await fetch("/reload_embeddings", { method: "POST" });
     loadTotalStudents(); 
 }
+// ---------------- EVENT LISTENERS ----------------
+
+
 selects.forEach(s => {
     s.addEventListener("change", () => {
-        updateLabel();
-        applyFilters();   // 🔥 important
+        applyFilters();
+        updateBadge(); // ⭐ ADD THIS
     });
 });
 
