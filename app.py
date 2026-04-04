@@ -241,15 +241,16 @@ def gen_frames():
 
 @app.route("/")
 def home():
-
     if "user" not in session:
         return redirect("/login")
 
     return render_template(
         "dashboard.html",
         faculty_name=session.get("name"),
-        department=session.get("department"),
-        designation=session.get("designation")
+        selected_branch=session.get("branch", ""),
+        selected_batch=session.get("batch", ""),
+        selected_group=session.get("group", ""),
+        selected_semester=session.get("semester", "")
     )
 
 
@@ -399,7 +400,11 @@ def students_page():
 
     return render_template(
         "student.html",
-        faculty_name=session.get("name")
+        faculty_name=session.get("name"),
+        selected_branch=session.get("branch", ""),
+        selected_batch=session.get("batch", ""),
+        selected_group=session.get("group", ""),
+        selected_semester=session.get("semester", "")
     )
 # ---------------- RUN SERVER ----------------
 

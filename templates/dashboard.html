@@ -154,7 +154,7 @@
 
     <select id="semesterSelect"
     class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
-        <option>Select Branch</option>
+        <option>Select Semester</option>
     </select>
 
     <!-- Custom Arrow -->
@@ -171,7 +171,7 @@
 
     <select id="batchSelect"
     class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
-        <option>Select Branch</option>
+        <option>Select Batch</option>
     </select>
 
     <!-- Custom Arrow -->
@@ -188,7 +188,7 @@
 
     <select id="groupSelect"
     class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
-        <option>Select Branch</option>
+        <option>Select Group</option>
     </select>
 
     <!-- Custom Arrow -->
@@ -446,8 +446,14 @@ const selects = document.querySelectorAll("select");
 const label = document.querySelector(".bg-gradient-to-r");
 
 function updateLabel() {
-    const values = Array.from(selects).map(s => s.value);
-    label.innerText = values.join(" - ");
+    const branch = document.getElementById("branchSelect").value;
+    const sem = document.getElementById("semesterSelect").value;
+    const batch = document.getElementById("batchSelect").value;
+    const group = document.getElementById("groupSelect").value;
+
+    const values = [branch, sem, batch, group].filter(v => v);
+
+    label.innerText = values.length ? values.join(" - ") : "----";
 }
 
 selects.forEach(s => s.addEventListener("change", updateLabel));
@@ -462,18 +468,28 @@ async function loadFilters() {
     const group = document.getElementById("groupSelect");
     const semester = document.getElementById("semesterSelect");
 
-    // helper function
-    function fillDropdown(select, items, label){
-        select.innerHTML = `<option value="">Select ${label}</option>`;
+    function fillDropdown(select, items, selectedValue, labelName) {
+        select.innerHTML = `<option value="">Select ${labelName}</option>`;
+
         items.forEach(item => {
-            select.innerHTML += `<option value="${item}">${item}</option>`;
+            const opt = document.createElement("option");
+            opt.value = item;
+            opt.textContent = item;
+
+            if (item === selectedValue) {
+                opt.selected = true;
+            }
+
+            select.appendChild(opt);
         });
     }
 
-    fillDropdown(branch, data.branches, "Branch");
-    fillDropdown(batch, data.batches, "Batch");
-    fillDropdown(group, data.groups, "Group");
-    fillDropdown(semester, data.semesters, "Semester");
+    fillDropdown(branch, data.branches, "{{ selected_branch }}", "Branch");
+    fillDropdown(batch, data.batches, "{{ selected_batch }}", "Batch");
+    fillDropdown(group, data.groups, "{{ selected_group }}", "Group");
+    fillDropdown(semester, data.semesters, "{{ selected_semester }}", "Semester");
+
+    updateLabel(); // ✅ VERY IMPORTANT
 }
 
 // call on page load

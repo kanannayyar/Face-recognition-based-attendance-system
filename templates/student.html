@@ -128,43 +128,61 @@
 </header>
  
 <main class="max-w-screen-xl mx-auto px-6 py-7 space-y-5">
- 
-  <!-- CLASS SELECTION BAR -->
-  <div class="bg-white border border-slate-200 rounded-2xl px-5 py-4 flex flex-wrap items-center gap-4 shadow-sm">
-    <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest whitespace-nowrap">Class Selection:</span>
-    <div class="flex flex-wrap gap-3 flex-1">
- 
-      <select id="dept" onchange="updateBadge()"
-        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-        <option>Computer Science Engineering</option>
-        <option>Electronics Engineering</option>
-        <option>Mechanical Engineering</option>
-        <option>Civil Engineering</option>
-      </select>
- 
-      <select id="sem" onchange="updateBadge()"
-        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-        <option>Semester 1</option><option>Semester 2</option><option>Semester 3</option>
-        <option>Semester 4</option><option>Semester 5</option><option>Semester 6</option>
-        <option>Semester 7</option><option>Semester 8</option>
-      </select>
- 
-      <select id="section" onchange="updateBadge()"
-        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-        <option>Section A</option><option>Section B</option><option>Section C</option>
-      </select>
- 
-      <select id="group" onchange="updateBadge()"
-        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-        <option>Group A</option><option>Group B</option><option>Group C</option>
-      </select>
- 
+        <!-- CLASS SELECTION BAR -->
+<div class="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between mb-6">
+
+    <!-- LEFT TEXT -->
+    <div class="text-gray-600 font-semibold">
+        CLASS SELECTION:
     </div>
-    <div id="class-badge"
-      class="bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap shadow-sm">
-      – – –
+
+    <!-- DROPDOWNS -->
+    <div class="flex items-center gap-3">
+
+        <div class="relative">
+
+    <select id="branchSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Branch</option>
+    </select>
+
+</div>
+
+<div class="relative">
+
+    <select id="semesterSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Semester</option>
+    </select>
+
+</div>
+
+<div class="relative">
+
+    <select id="batchSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Batch</option>
+    </select>
+
+</div>
+
+<div class="relative">
+
+    <select id="groupSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Group</option>
+    </select>
+
+</div>
     </div>
-  </div>
+
+    <!-- RIGHT SIDE LABEL -->
+    <div id="classBadge"
+class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+    - - - -
+</div>
+
+</div>
  
   <!-- STAT CARDS -->
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -172,7 +190,7 @@
     <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-md shadow-blue-200 flex items-center justify-between">
       <div>
         <p class="text-sm opacity-90 mb-1">Total Students</p>
-        <p class="text-4xl font-bold tracking-tight" id="stat-total">15</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-total">0</p>
       </div>
       <span class="text-4xl opacity-40">👥</span>
     </div>
@@ -196,7 +214,7 @@
     <div class="stat-card bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl p-5 text-white shadow-md shadow-slate-200 flex items-center justify-between">
       <div>
         <p class="text-sm opacity-90 mb-1">Not Marked</p>
-        <p class="text-4xl font-bold tracking-tight" id="stat-notmarked">15</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-notmarked">0</p>
       </div>
       <span class="text-4xl opacity-40">🕐</span>
     </div>
@@ -271,153 +289,247 @@
 <script>
 let students = [];
 
-async function loadStudents() {
-  const res = await fetch('/get_students');
-  const data = await res.json();
-
-  students = data.students;
-
-  renderTable(students);
-  updateStats();
-}
- 
-const statusConfig = {
-  present:    { label: 'Present',    icon: '✓', badge: 'bg-green-50 text-green-700 border-green-200' },
-  absent:     { label: 'Absent',     icon: '✗', badge: 'bg-red-50 text-red-600 border-red-200'       },
-  'not-marked': { label: 'Not Marked', icon: '⏱', badge: 'bg-slate-100 text-slate-500 border-slate-200' },
-};
- 
-function badgeHTML(status) {
-  const c = statusConfig[status];
-  return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs font-semibold ${c.badge}">${c.icon} ${c.label}</span>`;
-}
- 
-function rowHTML(s) {
-  return `
-  <tr class="hover:bg-slate-50" id="row-${s.roll}">
-    <td class="px-6 py-3.5 font-mono text-xs font-medium text-blue-600">${s.roll}</td>
-    <td class="px-6 py-3.5 font-semibold text-slate-800">${s.name}</td>
-    <td class="px-6 py-3.5 text-slate-400 text-xs">${s.email}</td>
-    <td class="px-6 py-3.5" id="badge-${s.roll}">${badgeHTML(s.status)}</td>
-    <td class="px-6 py-3.5">
-      <div class="flex gap-2">
-        <button onclick="mark('${s.roll}','present')"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-200 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-600 hover:text-white hover:border-green-600 transition">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
-          Present
-        </button>
-        <button onclick="mark('${s.roll}','absent')"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          Absent
-        </button>
-      </div>
-    </td>
-  </tr>`;
-}
- 
-function renderTable(data) {
-  const tbody = document.getElementById('student-table');
-  const noRes = document.getElementById('no-results');
-  if (!data.length) { tbody.innerHTML = ''; noRes.classList.remove('hidden'); return; }
-  noRes.classList.add('hidden');
-  tbody.innerHTML = data.map(rowHTML).join('');
-}
- 
-function updateStats() {
-  const present  = students.filter(s => s.status === 'present').length;
-  const absent   = students.filter(s => s.status === 'absent').length;
-  const nm       = students.filter(s => s.status === 'not-marked').length;
-  const marked   = present + absent;
-  const rate     = marked > 0 ? Math.round(present / marked * 100) : 0;
-  document.getElementById('stat-total').textContent     = students.length;
-  document.getElementById('stat-present').textContent   = present;
-  document.getElementById('stat-absent').textContent    = absent;
-  document.getElementById('stat-notmarked').textContent = nm;
-  document.getElementById('stat-rate').textContent      = rate + '%';
-}
- 
-function mark(roll, status) {
-  const s = students.find(s => s.roll === roll);
-  if (!s) return;
-  s.status = s.status === status ? 'not-marked' : status;
-  const el = document.getElementById('badge-' + roll);
-  if (el) el.innerHTML = badgeHTML(s.status);
-  updateStats();
-}
- 
-function markAll(status) {
-  students.forEach(s => s.status = status);
-  renderTable(getFiltered());
-  updateStats();
-}
- 
-function resetAll() {
-  students.forEach(s => s.status = 'not-marked');
-  renderTable(getFiltered());
-  updateStats();
-}
- 
-function getFiltered() {
-  const q = document.getElementById('search').value.toLowerCase();
-  if (!q) return students;
-  return students.filter(s =>
-    s.name.toLowerCase().includes(q) ||
-    s.roll.toLowerCase().includes(q) ||
-    s.email.toLowerCase().includes(q)
-  );
-}
- 
-function filterTable() { renderTable(getFiltered()); }
- 
-const deptMap = {
-  'Computer Science Engineering': 'CSE',
-  'Electronics Engineering': 'ECE',
-  'Mechanical Engineering': 'ME',
-  'Civil Engineering': 'CE'
-};
+// ---------------- LOAD FILTER DROPDOWNS ----------------
 function updateBadge() {
-  const dept    = document.getElementById('dept').value;
-  const sem     = document.getElementById('sem').value.replace('Semester ', 'Sem ');
-  const section = document.getElementById('section').value;
-  const group   = document.getElementById('group').value;
-  document.getElementById('class-badge').textContent = `${deptMap[dept] || dept} – ${sem} – ${section} – ${group}`;
+
+    const branch = document.getElementById("branchSelect").value;
+    const sem = document.getElementById("semesterSelect").value;
+    const batch = document.getElementById("batchSelect").value;
+    const group = document.getElementById("groupSelect").value;
+
+    const badge = document.getElementById("classBadge");
+
+    if (!branch && !sem && !batch && !group) {
+        badge.textContent = "- - - -";
+        return;
+    }
+
+    badge.textContent = `${branch || "--"} • ${sem || "--"} • ${batch || "--"} • ${group || "--"}`;
 }
- 
-// -------- DATE --------
+
+async function loadFilters() {
+
+    const res = await fetch("/get_filters");
+    const data = await res.json();
+
+    const branch = document.getElementById("branchSelect");
+    const batch = document.getElementById("batchSelect");
+    const group = document.getElementById("groupSelect");
+    const semester = document.getElementById("semesterSelect");
+
+    const selected = {
+        branch: "{{ selected_branch }}",
+        batch: "{{ selected_batch }}",
+        group: "{{ selected_group }}",
+        semester: "{{ selected_semester }}"
+    };
+
+    function fill(select, items, key, label) {
+    select.innerHTML = `<option value="">Select ${label}</option>`;
+
+    items.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item;
+        opt.textContent = item;
+
+        if (item === selected[key]) {
+            opt.selected = true;
+        }
+
+        select.appendChild(opt);
+    });
+}
+
+    fill(branch, data.branches, "branch", "Branch");
+    fill(batch, data.batches, "batch", "Batch");
+    fill(group, data.groups, "group", "Group");
+    fill(semester, data.semesters, "semester", "Semester");
+
+    updateBadge(); // ⭐ IMPORTANT
+}
+// ---------------- APPLY FILTERS ----------------
+async function applyFilters() {
+    const data = {
+        branch: document.getElementById("branchSelect").value,
+        batch: document.getElementById("batchSelect").value,
+        group: document.getElementById("groupSelect").value,
+        semester: document.getElementById("semesterSelect").value
+    };
+
+    await fetch("/set_filters", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    await fetch("/reload_embeddings", { method: "POST" }); // ⭐ IMPORTANT
+
+    loadStudents();
+}
+
+// ---------------- EVENT LISTENERS ----------------
+const selects = [
+    document.getElementById("branchSelect"),
+    document.getElementById("batchSelect"),
+    document.getElementById("groupSelect"),
+    document.getElementById("semesterSelect")
+];
+
+selects.forEach(s => {
+    s.addEventListener("change", () => {
+        applyFilters();
+        updateBadge(); // ⭐ ADD THIS
+    });
+});
+
+// ---------------- LOAD STUDENTS ----------------
+async function loadStudents() {
+    const res = await fetch('/get_students');
+    const data = await res.json();
+
+    students = data.students;
+
+    renderTable(students);
+    updateStats();
+}
+
+// ---------------- STATUS CONFIG ----------------
+const statusConfig = {
+    present: { label: 'Present', icon: '✓', badge: 'bg-green-50 text-green-700 border-green-200' },
+    absent: { label: 'Absent', icon: '✗', badge: 'bg-red-50 text-red-600 border-red-200' },
+    'not-marked': { label: 'Not Marked', icon: '⏱', badge: 'bg-slate-100 text-slate-500 border-slate-200' },
+};
+
+function badgeHTML(status) {
+    const c = statusConfig[status];
+    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs font-semibold ${c.badge}">${c.icon} ${c.label}</span>`;
+}
+
+// ---------------- TABLE RENDER ----------------
+function rowHTML(s) {
+    return `
+    <tr class="hover:bg-slate-50">
+        <td class="px-6 py-3.5 font-mono text-xs font-medium text-blue-600">${s.roll}</td>
+        <td class="px-6 py-3.5 font-semibold text-slate-800">${s.name}</td>
+        <td class="px-6 py-3.5 text-slate-400 text-xs">${s.email}</td>
+        <td class="px-6 py-3.5" id="badge-${s.roll}">${badgeHTML(s.status)}</td>
+        <td class="px-6 py-3.5">
+            <div class="flex gap-2">
+                <button onclick="mark('${s.roll}','present')" class="px-3 py-1 bg-green-100 text-green-700 rounded">Present</button>
+                <button onclick="mark('${s.roll}','absent')" class="px-3 py-1 bg-red-100 text-red-700 rounded">Absent</button>
+            </div>
+        </td>
+    </tr>`;
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('student-table');
+    const noRes = document.getElementById('no-results');
+
+    if (!data.length) {
+        tbody.innerHTML = '';
+        noRes.classList.remove('hidden');
+        return;
+    }
+
+    noRes.classList.add('hidden');
+    tbody.innerHTML = data.map(rowHTML).join('');
+}
+
+// ---------------- STATS ----------------
+function updateStats() {
+    const present = students.filter(s => s.status === 'present').length;
+    const absent = students.filter(s => s.status === 'absent').length;
+    const nm = students.filter(s => s.status === 'not-marked').length;
+
+    const marked = present + absent;
+    const rate = marked > 0 ? Math.round(present / marked * 100) : 0;
+
+    document.getElementById('stat-total').textContent = students.length;
+    document.getElementById('stat-present').textContent = present;
+    document.getElementById('stat-absent').textContent = absent;
+    document.getElementById('stat-notmarked').textContent = nm;
+    document.getElementById('stat-rate').textContent = rate + '%';
+}
+
+// ---------------- ACTIONS ----------------
+function mark(roll, status) {
+    const s = students.find(s => s.roll === roll);
+    if (!s) return;
+
+    s.status = s.status === status ? 'not-marked' : status;
+
+    const el = document.getElementById('badge-' + roll);
+    if (el) el.innerHTML = badgeHTML(s.status);
+
+    updateStats();
+}
+
+function markAll(status) {
+    students.forEach(s => s.status = status);
+    renderTable(getFiltered());
+    updateStats();
+}
+
+function resetAll() {
+    students.forEach(s => s.status = 'not-marked');
+    renderTable(getFiltered());
+    updateStats();
+}
+
+// ---------------- SEARCH ----------------
+function getFiltered() {
+    const q = document.getElementById('search').value.toLowerCase();
+    if (!q) return students;
+
+    return students.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.roll.toLowerCase().includes(q) ||
+        s.email.toLowerCase().includes(q)
+    );
+}
+
+function filterTable() {
+    renderTable(getFiltered());
+}
+
+// ---------------- DATE ----------------
 function updateDate() {
-  const today = new Date();
+    const today = new Date();
 
-  const options = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  };
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
 
-  document.getElementById("currentDate").textContent =
-    today.toLocaleDateString('en-US', options);
+    document.getElementById("currentDate").textContent =
+        today.toLocaleDateString('en-US', options);
 }
 
-updateDate();
-
-
-// -------- PROFILE DROPDOWN --------
+// ---------------- DROPDOWN ----------------
 function toggleDropdown() {
-  document.getElementById("profileDropdown")
-    .classList.toggle("hidden");
+    document.getElementById("profileDropdown").classList.toggle("hidden");
 }
 
 document.addEventListener("click", function (event) {
-  const dropdown = document.getElementById("profileDropdown");
-  const container = document.getElementById("profileContainer");
+    const dropdown = document.getElementById("profileDropdown");
+    const container = document.getElementById("profileContainer");
 
-  if (!container.contains(event.target)) {
-    dropdown.classList.add("hidden");
-  }
+    if (!container.contains(event.target)) {
+        dropdown.classList.add("hidden");
+    }
 });
 
+// ---------------- INIT ----------------
+window.addEventListener("DOMContentLoaded", async () => {
+    updateDate();
+    await loadFilters();   // wait for dropdowns
+    await loadStudents();  // then load students
+});
 
+// -------- NAVIGATION BUTTONS --------
 function setActive(btn) {
     document.querySelectorAll('.nav-view-btn').forEach(b => {
         b.classList.remove("bg-slate-900", "text-white", "border-slate-900");
