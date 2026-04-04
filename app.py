@@ -77,6 +77,7 @@ def load_embeddings(filters=None):
     print(f"[INFO] Loaded {len(embeddings)} embeddings")
     return names, embeddings
 
+names, embeddings = load_embeddings()
 
 @app.route("/reload_embeddings", methods=["POST"])
 def reload_embeddings():
@@ -121,6 +122,9 @@ def recognize_face(face_img):
 
     best_sim = -1
     best_name = None
+
+    if not embeddings:
+        return None, 0
 
     for name,ref in zip(names,embeddings):
 
@@ -172,8 +176,8 @@ def gen_frames():
 
             frame_count += 1
 
-            # run recognition every 30 frames
-            if frame_count % 60 == 0:
+            # run recognition every 90 frames
+            if frame_count % 30 == 0:
 
                 name,sim = recognize_face(face_img)
 
@@ -358,6 +362,45 @@ def get_total_students():
 
     return {"total": count}
 
+@app.route("/get_students")
+def get_students():
+
+    query = {}
+
+    # apply filters from session
+    if session.get("branch"):
+        query["branch"] = session["branch"]
+    if session.get("batch"):
+        query["batch"] = session["batch"]
+    if session.get("group"):
+        query["group"] = session["group"]
+    if session.get("semester"):
+        query["semester"] = session["semester"]
+
+    docs = list(faces_collection.find(query, {"_id": 0}))
+
+    students = []
+
+    for d in docs:
+        students.append({
+            "roll": d.get("rollno", ""),
+            "name": d.get("name", ""),
+            "email": d.get("email", ""),
+            "status": "not-marked"
+        })
+
+    return {"students": students}
+
+
+@app.route("/students")
+def students_page():
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template(
+        "student.html",
+        faculty_name=session.get("name")
+    )
 # ---------------- RUN SERVER ----------------
 
 if __name__=="__main__":

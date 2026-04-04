@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Recognition Attendance System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .stat-card { transition: transform .2s, box-shadow .2s; }
+  .stat-card:hover { transform: translateY(-3px); }
+  tbody tr { transition: background .12s; }
+  html { zoom: 1.0; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+ 
+<header class="bg-white shadow-sm py-4 px-6">
+
+    <div class="w-full flex items-center justify-between">
+
+        <!-- LEFT SIDE : LOGO + TITLE -->
+        <div class="flex items-center gap-4">
+
+            <!-- LOGO -->
+            <div class="w-14 h-14 flex items-center justify-center">
+                <img src="{{ url_for('static', filename='logo (3).png') }}"
+                     alt="Logo"
+                     class="w-14 h-14 object-contain">
+            </div>
+
+            <!-- TITLE -->
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    Face Recognition Attendance System
+                </h1>
+                <p class="text-sm text-gray-500">
+                    Real-time attendance tracking
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- RIGHT SIDE : DATE + PROFILE -->
+        <div class="flex items-center gap-6">
+        <button id="btn-camera" onclick="setView('camera',this)"
+        class="nav-view-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        Camera
+      </button>
+      <button id="btn-list" onclick="setView('list',this)"
+        class="nav-view-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="3" rx="1"/><rect x="3" y="10.5" width="18" height="3" rx="1"/><rect x="3" y="17" width="18" height="3" rx="1"/></svg>
+        Student List
+      </button>
+
+            <!-- DATE -->
+            <div class="flex items-center gap-2 text-gray-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+
+                <span id="currentDate" class="font-medium"></span>
+            </div>
+
+
+            <!-- PROFILE -->
+            <div id="profileContainer" class="relative">
+
+                <button onclick="toggleDropdown()" class="flex items-center gap-2 focus:outline-none">
+
+                    <!-- USER ICON -->
+                    <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                            </path>
+                        </svg>
+                    </div>
+
+                    <!-- FACULTY NAME -->
+                    <span class="font-semibold text-gray-700">{{ faculty_name }}</span>
+
+                    <!-- ARROW -->
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 9l-7 7-7-7"></path>
+                    </svg>
+
+                </button>
+
+                <!-- DROPDOWN -->
+                <div id="profileDropdown"
+                     class="hidden absolute right-0 mt-3 w-48 bg-white rounded-lg shadow-lg border" style="z-index:10;">
+
+                    <!-- <div class="p-4 border-b">
+                        <p id="facultyNameDropdown" class="font-semibold text-gray-800"></p>
+                        <p class="text-sm text-gray-500">Faculty</p>
+                    </div> -->
+
+                    <a href="profile.html"
+                       class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                       Profile
+                    </a>
+
+                    <a href="settings.html"
+                       class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                       Settings
+                    </a>
+
+                    <a href="/logout"
+                      class="block px-4 py-2 text-red-500 hover:bg-gray-100">
+                      Logout
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+ 
+<main class="max-w-screen-xl mx-auto px-6 py-7 space-y-5">
+ 
+  <!-- CLASS SELECTION BAR -->
+  <div class="bg-white border border-slate-200 rounded-2xl px-5 py-4 flex flex-wrap items-center gap-4 shadow-sm">
+    <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest whitespace-nowrap">Class Selection:</span>
+    <div class="flex flex-wrap gap-3 flex-1">
+ 
+      <select id="dept" onchange="updateBadge()"
+        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+        <option>Computer Science Engineering</option>
+        <option>Electronics Engineering</option>
+        <option>Mechanical Engineering</option>
+        <option>Civil Engineering</option>
+      </select>
+ 
+      <select id="sem" onchange="updateBadge()"
+        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+        <option>Semester 1</option><option>Semester 2</option><option>Semester 3</option>
+        <option>Semester 4</option><option>Semester 5</option><option>Semester 6</option>
+        <option>Semester 7</option><option>Semester 8</option>
+      </select>
+ 
+      <select id="section" onchange="updateBadge()"
+        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+        <option>Section A</option><option>Section B</option><option>Section C</option>
+      </select>
+ 
+      <select id="group" onchange="updateBadge()"
+        class="bg-slate-50 border border-slate-200 text-slate-800 text-sm font-medium rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+        <option>Group A</option><option>Group B</option><option>Group C</option>
+      </select>
+ 
+    </div>
+    <div id="class-badge"
+      class="bg-gradient-to-r from-blue-600 to-violet-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap shadow-sm">
+      – – –
+    </div>
+  </div>
+ 
+  <!-- STAT CARDS -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+ 
+    <div class="stat-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-md shadow-blue-200 flex items-center justify-between">
+      <div>
+        <p class="text-sm opacity-90 mb-1">Total Students</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-total">15</p>
+      </div>
+      <span class="text-4xl opacity-40">👥</span>
+    </div>
+ 
+    <div class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-5 text-white shadow-md shadow-green-200 flex items-center justify-between">
+      <div>
+        <p class="text-sm opacity-90 mb-1">Present</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-present">0</p>
+      </div>
+      <span class="text-4xl opacity-40">✅</span>
+    </div>
+ 
+    <div class="stat-card bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-md shadow-red-200 flex items-center justify-between">
+      <div>
+        <p class="text-sm opacity-90 mb-1">Absent</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-absent">0</p>
+      </div>
+      <span class="text-4xl opacity-40">❌</span>
+    </div>
+ 
+    <div class="stat-card bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl p-5 text-white shadow-md shadow-slate-200 flex items-center justify-between">
+      <div>
+        <p class="text-sm opacity-90 mb-1">Not Marked</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-notmarked">15</p>
+      </div>
+      <span class="text-4xl opacity-40">🕐</span>
+    </div>
+ 
+    <div class="stat-card bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-5 text-white shadow-md shadow-purple-200 flex items-center justify-between col-span-2 sm:col-span-1">
+      <div>
+        <p class="text-sm opacity-90 mb-1">Attendance Rate</p>
+        <p class="text-4xl font-bold tracking-tight" id="stat-rate">0%</p>
+      </div>
+      <span class="text-4xl opacity-40">📊</span>
+    </div>
+ 
+  </div>
+ 
+  <!-- STUDENT LIST CARD -->
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+ 
+    <!-- Card Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-slate-100">
+      <div>
+        <h2 class="text-lg font-bold">Student Attendance List</h2>
+        <p class="text-sm text-slate-400 mt-0.5">Manage attendance for all students in the selected class</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button onclick="markAll('present')"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white hover:bg-green-50 hover:border-green-400 hover:text-green-700 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
+          Mark All Present
+        </button>
+        <button onclick="markAll('absent')"
+          class="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white hover:bg-red-50 hover:border-red-400 hover:text-red-600 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Mark All Absent
+        </button>
+        <button onclick="resetAll()"
+          class="px-3.5 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition">
+          Reset All
+        </button>
+      </div>
+    </div>
+ 
+    <!-- Search -->
+    <div class="px-6 py-3 border-b border-slate-100">
+      <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus-within:border-blue-400 focus-within:bg-white transition">
+        <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search" type="text" oninput="filterTable()"
+          placeholder="Search by name, roll number, or email..."
+          class="bg-transparent w-full text-sm text-slate-800 outline-none placeholder-slate-400" />
+      </div>
+    </div>
+ 
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200">
+            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Roll Number</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Name</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="student-table" class="divide-y divide-slate-100"></tbody>
+      </table>
+      <p id="no-results" class="hidden text-center py-10 text-slate-400 text-sm">No students match your search.</p>
+    </div>
+ 
+  </div>
+</main>
+ 
+<script>
+let students = [];
+
+async function loadStudents() {
+  const res = await fetch('/get_students');
+  const data = await res.json();
+
+  students = data.students;
+
+  renderTable(students);
+  updateStats();
+}
+ 
+const statusConfig = {
+  present:    { label: 'Present',    icon: '✓', badge: 'bg-green-50 text-green-700 border-green-200' },
+  absent:     { label: 'Absent',     icon: '✗', badge: 'bg-red-50 text-red-600 border-red-200'       },
+  'not-marked': { label: 'Not Marked', icon: '⏱', badge: 'bg-slate-100 text-slate-500 border-slate-200' },
+};
+ 
+function badgeHTML(status) {
+  const c = statusConfig[status];
+  return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs font-semibold ${c.badge}">${c.icon} ${c.label}</span>`;
+}
+ 
+function rowHTML(s) {
+  return `
+  <tr class="hover:bg-slate-50" id="row-${s.roll}">
+    <td class="px-6 py-3.5 font-mono text-xs font-medium text-blue-600">${s.roll}</td>
+    <td class="px-6 py-3.5 font-semibold text-slate-800">${s.name}</td>
+    <td class="px-6 py-3.5 text-slate-400 text-xs">${s.email}</td>
+    <td class="px-6 py-3.5" id="badge-${s.roll}">${badgeHTML(s.status)}</td>
+    <td class="px-6 py-3.5">
+      <div class="flex gap-2">
+        <button onclick="mark('${s.roll}','present')"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-200 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-600 hover:text-white hover:border-green-600 transition">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="8 12 11 15 16 9"/></svg>
+          Present
+        </button>
+        <button onclick="mark('${s.roll}','absent')"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Absent
+        </button>
+      </div>
+    </td>
+  </tr>`;
+}
+ 
+function renderTable(data) {
+  const tbody = document.getElementById('student-table');
+  const noRes = document.getElementById('no-results');
+  if (!data.length) { tbody.innerHTML = ''; noRes.classList.remove('hidden'); return; }
+  noRes.classList.add('hidden');
+  tbody.innerHTML = data.map(rowHTML).join('');
+}
+ 
+function updateStats() {
+  const present  = students.filter(s => s.status === 'present').length;
+  const absent   = students.filter(s => s.status === 'absent').length;
+  const nm       = students.filter(s => s.status === 'not-marked').length;
+  const marked   = present + absent;
+  const rate     = marked > 0 ? Math.round(present / marked * 100) : 0;
+  document.getElementById('stat-total').textContent     = students.length;
+  document.getElementById('stat-present').textContent   = present;
+  document.getElementById('stat-absent').textContent    = absent;
+  document.getElementById('stat-notmarked').textContent = nm;
+  document.getElementById('stat-rate').textContent      = rate + '%';
+}
+ 
+function mark(roll, status) {
+  const s = students.find(s => s.roll === roll);
+  if (!s) return;
+  s.status = s.status === status ? 'not-marked' : status;
+  const el = document.getElementById('badge-' + roll);
+  if (el) el.innerHTML = badgeHTML(s.status);
+  updateStats();
+}
+ 
+function markAll(status) {
+  students.forEach(s => s.status = status);
+  renderTable(getFiltered());
+  updateStats();
+}
+ 
+function resetAll() {
+  students.forEach(s => s.status = 'not-marked');
+  renderTable(getFiltered());
+  updateStats();
+}
+ 
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  if (!q) return students;
+  return students.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.roll.toLowerCase().includes(q) ||
+    s.email.toLowerCase().includes(q)
+  );
+}
+ 
+function filterTable() { renderTable(getFiltered()); }
+ 
+const deptMap = {
+  'Computer Science Engineering': 'CSE',
+  'Electronics Engineering': 'ECE',
+  'Mechanical Engineering': 'ME',
+  'Civil Engineering': 'CE'
+};
+function updateBadge() {
+  const dept    = document.getElementById('dept').value;
+  const sem     = document.getElementById('sem').value.replace('Semester ', 'Sem ');
+  const section = document.getElementById('section').value;
+  const group   = document.getElementById('group').value;
+  document.getElementById('class-badge').textContent = `${deptMap[dept] || dept} – ${sem} – ${section} – ${group}`;
+}
+ 
+// -------- DATE --------
+function updateDate() {
+  const today = new Date();
+
+  const options = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  };
+
+  document.getElementById("currentDate").textContent =
+    today.toLocaleDateString('en-US', options);
+}
+
+updateDate();
+
+
+// -------- PROFILE DROPDOWN --------
+function toggleDropdown() {
+  document.getElementById("profileDropdown")
+    .classList.toggle("hidden");
+}
+
+document.addEventListener("click", function (event) {
+  const dropdown = document.getElementById("profileDropdown");
+  const container = document.getElementById("profileContainer");
+
+  if (!container.contains(event.target)) {
+    dropdown.classList.add("hidden");
+  }
+});
+
+
+function setActive(btn) {
+    document.querySelectorAll('.nav-view-btn').forEach(b => {
+        b.classList.remove("bg-slate-900", "text-white", "border-slate-900");
+        b.classList.add("bg-white", "text-slate-700", "border-slate-200");
+    });
+
+    btn.classList.remove("bg-white", "text-slate-700", "border-slate-200");
+    btn.classList.add("bg-slate-900", "text-white", "border-slate-900");
+}
+
+function setView(view) {
+    if (view === "camera") {
+        window.location.href = "/";
+    } else {
+        window.location.href = "/students";
+    }
+}
+
+// AUTO highlight based on page
+window.addEventListener("DOMContentLoaded", () => {
+    const path = window.location.pathname;
+
+    if (path === "/" || path.includes("dashboard")) {
+        setActive(document.getElementById("btn-camera"));
+    } else if (path.includes("students")) {
+        setActive(document.getElementById("btn-list"));
+    }
+});
+</script>
+</body>
+</html>
