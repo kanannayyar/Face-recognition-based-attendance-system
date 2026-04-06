@@ -200,6 +200,23 @@
     </div>
 
 </div>
+
+<div class="relative">
+
+    <select id="lectureSelect"
+    class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none appearance-none w-full">
+        <option>Select Lecture</option>
+    </select>
+
+    <!-- Arrow -->
+    <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 9l-7 7-7-7"></path>
+        </svg>
+    </div>
+
+</div>
     </div>
 
     <!-- RIGHT SIDE LABEL -->
@@ -451,6 +468,7 @@ function updateBadge() {
     const sem = document.getElementById("semesterSelect").value;
     const batch = document.getElementById("batchSelect").value;
     const group = document.getElementById("groupSelect").value;
+    const lecture = document.getElementById("lectureSelect").value;
 
     const badge = document.getElementById("classBadge");
 
@@ -459,7 +477,7 @@ function updateBadge() {
         return;
     }
 
-    badge.textContent = `${branch || "--"} • ${sem || "--"} • ${batch || "--"} • ${group || "--"}`;
+    badge.textContent = `${branch || "--"} • ${sem || "--"} • ${batch || "--"} • ${group || "--"} • ${lecture || "--"}`;
 }
 
 selects.forEach(s => s.addEventListener("change", updateBadge));
@@ -473,12 +491,14 @@ async function loadFilters() {
     const batch = document.getElementById("batchSelect");
     const group = document.getElementById("groupSelect");
     const semester = document.getElementById("semesterSelect");
+    const lecture = document.getElementById("lectureSelect");
 
     const selected = {
         branch: "{{ selected_branch }}",
         batch: "{{ selected_batch }}",
         group: "{{ selected_group }}",
-        semester: "{{ selected_semester }}"
+        semester: "{{ selected_semester }}",
+        lecture: "{{ selected_lecture }}"
     };
 
     function fill(select, items, key, label) {
@@ -494,6 +514,7 @@ async function loadFilters() {
         }
 
         select.appendChild(opt);
+
     });
 }
 
@@ -501,8 +522,11 @@ async function loadFilters() {
     fill(batch, data.batches, "batch", "Batch");
     fill(group, data.groups, "group", "Group");
     fill(semester, data.semesters, "semester", "Semester");
+    fill(lecture, data.lectures, "lecture", "Lecture");
+    lecture.value = "{{ selected_lecture }}";
 
     updateBadge(); // ⭐ IMPORTANT
+    applyFilters();
 }
 
 // call on page load
@@ -514,7 +538,8 @@ async function applyFilters() {
         branch: document.getElementById("branchSelect").value,
         batch: document.getElementById("batchSelect").value,
         group: document.getElementById("groupSelect").value,
-        semester: document.getElementById("semesterSelect").value
+        semester: document.getElementById("semesterSelect").value,
+        lecture: document.getElementById("lectureSelect").value
     };
 
     await fetch("/set_filters", {

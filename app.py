@@ -55,6 +55,7 @@ def set_filters():
     session["batch"] = data.get("batch")
     session["group"] = data.get("group")
     session["semester"] = data.get("semester")
+    session["lecture"] = data.get("lecture")
 
     return {"status": "ok"}
 
@@ -250,7 +251,8 @@ def home():
         selected_branch=session.get("branch", ""),
         selected_batch=session.get("batch", ""),
         selected_group=session.get("group", ""),
-        selected_semester=session.get("semester", "")
+        selected_semester=session.get("semester", ""),
+        selected_lecture=session.get("lecture", "")
     )
 
 
@@ -280,6 +282,7 @@ def login():
                 session.pop("batch", None)
                 session.pop("group", None)
                 session.pop("semester", None)
+                session.pop("lecture", None)
 
                 return redirect("/")
 
@@ -346,7 +349,8 @@ def get_filters():
         "branches": branches,
         "batches": batches,
         "groups": groups,
-        "semesters": semesters
+        "semesters": semesters,
+        "lectures": ["L1", "L2", "L3", "L4"]
     }
 
 @app.route("/get_total_students")
@@ -382,6 +386,8 @@ def get_students():
         query["group"] = session["group"]
     if session.get("semester"):
         query["semester"] = session["semester"]
+    if session.get("lecture"):
+       query["lecture"] = session["lecture"]    
 
     docs = list(faces_collection.find(query, {"_id": 0}))
 
@@ -409,7 +415,8 @@ def students_page():
         selected_branch=session.get("branch", ""),
         selected_batch=session.get("batch", ""),
         selected_group=session.get("group", ""),
-        selected_semester=session.get("semester", "")
+        selected_semester=session.get("semester", ""),
+        selected_lecture=session.get("lecture", "")
     ) 
 # ---------------- RUN SERVER ----------------
 
