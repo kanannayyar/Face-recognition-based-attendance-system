@@ -270,11 +270,16 @@ def login():
 
             # ✅ compare hashed password
             if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
-
                 session["user"] = email
                 session["name"] = user.get("name", "")
                 session["department"] = user.get("department", "")
                 session["designation"] = user.get("designation", "")
+
+                # ✅ reset filters on login
+                session.pop("branch", None)
+                session.pop("batch", None)
+                session.pop("group", None)
+                session.pop("semester", None)
 
                 return redirect("/")
 
@@ -405,7 +410,7 @@ def students_page():
         selected_batch=session.get("batch", ""),
         selected_group=session.get("group", ""),
         selected_semester=session.get("semester", "")
-    )
+    ) 
 # ---------------- RUN SERVER ----------------
 
 if __name__=="__main__":
