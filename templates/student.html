@@ -377,8 +377,7 @@ async function applyFilters() {
 
     await fetch("/reload_embeddings", { method: "POST" }); // ⭐ IMPORTANT
 
-    await loadFilters();
-    loadStudents();
+    await loadStudents();
 }
 
 // ---------------- EVENT LISTENERS ----------------

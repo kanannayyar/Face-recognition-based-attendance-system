@@ -29,8 +29,13 @@ client = MongoClient("mongodb+srv://kananworks9_db_user:9rhFxzqwWhV9M3GO@cluster
 db = client["face_attendance"]
 faces_collection = db["faces"]
 faculty_collection = db["faculty"]
+attendance_collection = db["attendance"]
 
-SIMILARITY_THRESHOLD = 0.45
+current_lecture = None
+current_user = None
+
+
+SIMILARITY_THRESHOLD = 0.6
 
 marked_today = set()
 
@@ -49,6 +54,8 @@ if not os.path.exists(attendance_file):
 
 @app.route("/set_filters", methods=["POST"])
 def set_filters():
+    global names, embeddings   # 👈 ADD THIS
+
     data = request.json
 
     session["branch"] = data.get("branch")
@@ -57,8 +64,24 @@ def set_filters():
     session["semester"] = data.get("semester")
     session["lecture"] = data.get("lecture")
 
-    return {"status": "ok"}
+    # ✅ CREATE FILTER QUERY
+    filters = {}
 
+    if session.get("branch"):
+        filters["branch"] = session["branch"]
+    if session.get("batch"):
+        filters["batch"] = session["batch"]
+    if session.get("group"):
+        filters["group"] = session["group"]
+    if session.get("semester"):
+        filters["semester"] = session["semester"]
+
+    # ✅ RELOAD EMBEDDINGS
+    names, embeddings = load_embeddings(filters)
+
+    print("[INFO] Embeddings reloaded after filter")
+
+    return {"status": "ok"}
 # ---------------- LOAD EMBEDDINGS ----------------
 def load_embeddings(filters=None):
 
@@ -116,7 +139,6 @@ def recognize_face(face_img):
         )
 
         emb = np.array(result[0]["embedding"])
-        emb = emb / np.linalg.norm(emb)
 
     except:
         return None,0
@@ -137,6 +159,8 @@ def recognize_face(face_img):
 
     if best_sim > SIMILARITY_THRESHOLD:
         return best_name,best_sim
+    
+    print(f"Best match: {best_name}, Similarity: {best_sim}")
 
     return None,best_sim
 
@@ -183,31 +207,44 @@ def gen_frames():
                 name,sim = recognize_face(face_img)
 
                 if name:
-
                     last_name = name
                     last_similarity = sim
                     last_seen_time = time.time()
 
+                    if not current_lecture or not current_user:
+                     print("No lecture/user set")
+                     continue
+
+                    doc = faces_collection.find_one({"user_name": name})
+                    if not doc:
+                     print("Student not found in DB")
+                     continue
+
+                    roll = doc.get("rollno")
+                    student_name = doc.get("name", name)
+
                     today = datetime.now().strftime("%Y-%m-%d")
+                    time_now = datetime.now().strftime("%H:%M:%S")
 
-                    if (name,today) not in marked_today:
+# prevent duplicate entry
+                    existing = attendance_collection.find_one({
+                     "student_id": roll,
+                     "lecture": current_lecture,
+                     "date": today
+                    })
 
-                        time_now = datetime.now().strftime("%H:%M:%S")
+                    if not existing:
+                      attendance_collection.insert_one({
+                        "student_id": roll,
+                        "name": student_name,
+                        "time": time_now,
+                        "date": today,
+                        "lecture": current_lecture,
+                        "faculty_email": current_user,
+                        "status": "present"
+                      })
 
-                        with open(attendance_file,"a",newline="") as f:
-
-                            writer = csv.writer(f)
-
-                            writer.writerow([
-                                name,
-                                today,
-                                time_now,
-                                round(sim,3)
-                            ])
-
-                        marked_today.add((name,today))
-
-                        print(f"[ATTENDANCE] {name} marked")
+                      print(f"[DB] {student_name} marked")
 
             # display cached result
             if last_name and time.time()-last_seen_time < 3:
@@ -237,7 +274,8 @@ def gen_frames():
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n'+frame+b'\r\n')
-
+        time.sleep(0.03)
+        
 # ---------------- ROUTES ----------------
 
 @app.route("/")
@@ -385,9 +423,7 @@ def get_students():
     if session.get("group"):
         query["group"] = session["group"]
     if session.get("semester"):
-        query["semester"] = session["semester"]
-    if session.get("lecture"):
-       query["lecture"] = session["lecture"]    
+        query["semester"] = session["semester"] 
 
     docs = list(faces_collection.find(query, {"_id": 0}))
 
