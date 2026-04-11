@@ -33,6 +33,7 @@ attendance_collection = db["attendance"]
 
 current_lecture = None
 current_user = None
+last_mark_time = {}
 
 
 SIMILARITY_THRESHOLD = 0.6
@@ -54,7 +55,7 @@ if not os.path.exists(attendance_file):
 
 @app.route("/set_filters", methods=["POST"])
 def set_filters():
-    global names, embeddings   # 👈 ADD THIS
+    global names, embeddings, current_user, current_lecture
 
     data = request.json
 
@@ -63,6 +64,9 @@ def set_filters():
     session["group"] = data.get("group")
     session["semester"] = data.get("semester")
     session["lecture"] = data.get("lecture")
+
+    current_user = session.get("user")
+    current_lecture = session.get("lecture")
 
     # ✅ CREATE FILTER QUERY
     filters = {}
@@ -230,21 +234,30 @@ def gen_frames():
                     existing = attendance_collection.find_one({
                      "student_id": roll,
                      "lecture": current_lecture,
-                     "date": today
+                     "date": today,
+                     "faculty_email": current_user
                     })
 
-                    if not existing:
-                      attendance_collection.insert_one({
-                        "student_id": roll,
-                        "name": student_name,
-                        "time": time_now,
-                        "date": today,
-                        "lecture": current_lecture,
-                        "faculty_email": current_user,
-                        "status": "present"
-                      })
-
-                      print(f"[DB] {student_name} marked")
+                    now = time.time()
+                    if name not in last_mark_time or now - last_mark_time[name] > 10:
+                        existing = attendance_collection.find_one({
+                         "student_id": roll,
+                         "lecture": current_lecture,
+                         "date": today,
+                         "faculty_email": current_user
+                        })
+                        if not existing:
+                            attendance_collection.insert_one({
+                             "student_id": roll,
+                             "name": student_name,
+                             "time": time_now,
+                             "date": today,
+                             "lecture": current_lecture,
+                             "faculty_email": current_user,
+                             "status": "present"
+                            })    
+                        last_mark_time[name] = now   # ✅ update time
+                        print(f"[DB] {student_name} marked")
 
             # display cached result
             if last_name and time.time()-last_seen_time < 3:
