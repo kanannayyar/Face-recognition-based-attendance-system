@@ -424,11 +424,11 @@ def get_total_students():
     return {"total": count}
 
 @app.route("/get_students")
+@app.route("/get_students")
 def get_students():
 
     query = {}
 
-    # apply filters from session
     if session.get("branch"):
         query["branch"] = session["branch"]
     if session.get("batch"):
@@ -436,18 +436,35 @@ def get_students():
     if session.get("group"):
         query["group"] = session["group"]
     if session.get("semester"):
-        query["semester"] = session["semester"] 
+        query["semester"] = session["semester"]
 
     docs = list(faces_collection.find(query, {"_id": 0}))
+
+    today = datetime.now().strftime("%Y-%m-%d")
 
     students = []
 
     for d in docs:
+        roll = d.get("rollno", "")
+
+        # 🔥 CHECK ATTENDANCE DB
+        attendance = attendance_collection.find_one({
+            "student_id": roll,
+            "lecture": session.get("lecture"),
+            "date": today,
+            "faculty_email": session.get("user")
+        })
+
+        if attendance:
+            status = "present"
+        else:
+            status = "absent"   # 👈 IMPORTANT CHANGE
+
         students.append({
-            "roll": d.get("rollno", ""),
+            "roll": roll,
             "name": d.get("name", ""),
             "email": d.get("email", ""),
-            "status": "not-marked"
+            "status": status
         })
 
     return {"students": students}

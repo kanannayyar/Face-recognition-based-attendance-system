@@ -410,8 +410,7 @@ async function loadStudents() {
 // ---------------- STATUS CONFIG ----------------
 const statusConfig = {
     present: { label: 'Present', icon: '✓', badge: 'bg-green-50 text-green-700 border-green-200' },
-    absent: { label: 'Absent', icon: '✗', badge: 'bg-red-50 text-red-600 border-red-200' },
-    'not-marked': { label: 'Not Marked', icon: '⏱', badge: 'bg-slate-100 text-slate-500 border-slate-200' },
+    absent: { label: 'Absent', icon: '✗', badge: 'bg-red-50 text-red-600 border-red-200' }
 };
 
 function badgeHTML(status) {
@@ -572,6 +571,10 @@ window.addEventListener("DOMContentLoaded", () => {
         setActive(document.getElementById("btn-list"));
     }
 });
+// 🔥 AUTO REFRESH EVERY 3 SECONDS
+setInterval(async () => {
+    await loadStudents();
+}, 3000);
 </script>
 </body>
 </html>
