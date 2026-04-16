@@ -64,6 +64,7 @@ def set_filters():
     session["group"] = data.get("group")
     session["semester"] = data.get("semester")
     session["lecture"] = data.get("lecture")
+    session["date"] = data.get("date")  
 
     current_user = session.get("user")
     current_lecture = session.get("lecture")
@@ -424,7 +425,6 @@ def get_total_students():
     return {"total": count}
 
 @app.route("/get_students")
-@app.route("/get_students")
 def get_students():
 
     query = {}
@@ -440,7 +440,9 @@ def get_students():
 
     docs = list(faces_collection.find(query, {"_id": 0}))
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    selected_date = session.get("date")
+    if not selected_date:
+        selected_date = datetime.now().strftime("%Y-%m-%d")
 
     students = []
 
@@ -451,7 +453,7 @@ def get_students():
         attendance = attendance_collection.find_one({
             "student_id": roll,
             "lecture": session.get("lecture"),
-            "date": today,
+            "date": selected_date,
             "faculty_email": session.get("user")
         })
 
