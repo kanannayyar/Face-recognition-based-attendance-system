@@ -92,7 +92,11 @@ def load_embeddings(filters=None):
 
     query = filters if filters else {}
 
-    docs = list(faces_collection.find(query, {"_id":0}))
+    docs = list(faces_collection.find(query, {
+    "_id": 0,
+    "user_name": 1,
+    "embeddings": 1
+}))
 
     names = []
     embeddings = []
@@ -230,14 +234,6 @@ def gen_frames():
 
                     today = datetime.now().strftime("%Y-%m-%d")
                     time_now = datetime.now().strftime("%H:%M:%S")
-
-# prevent duplicate entry
-                    existing = attendance_collection.find_one({
-                     "student_id": roll,
-                     "lecture": current_lecture,
-                     "date": today,
-                     "faculty_email": current_user
-                    })
 
                     now = time.time()
                     if name not in last_mark_time or now - last_mark_time[name] > 10:
@@ -444,31 +440,30 @@ def get_students():
     if not selected_date:
         selected_date = datetime.now().strftime("%Y-%m-%d")
 
+    # 🔥 STEP 1: get all attendance in ONE query
+    attendance_docs = list(attendance_collection.find({
+        "lecture": session.get("lecture"),
+        "date": selected_date,
+        "faculty_email": session.get("user")
+    }))
+    
+    # 🔥 STEP 2: make fast lookup set
+    present_set = set(a["student_id"] for a in attendance_docs)
+    
+    # 🔥 STEP 3: build student list (NO DB CALL INSIDE LOOP)
     students = []
-
+    
     for d in docs:
         roll = d.get("rollno", "")
-
-        # 🔥 CHECK ATTENDANCE DB
-        attendance = attendance_collection.find_one({
-            "student_id": roll,
-            "lecture": session.get("lecture"),
-            "date": selected_date,
-            "faculty_email": session.get("user")
-        })
-
-        if attendance:
-            status = "present"
-        else:
-            status = "absent"   # 👈 IMPORTANT CHANGE
-
+    
+        status = "present" if roll in present_set else "absent"
+    
         students.append({
             "roll": roll,
             "name": d.get("name", ""),
             "email": d.get("email", ""),
             "status": status
         })
-
     return {"students": students}
 
 

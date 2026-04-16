@@ -369,16 +369,17 @@ async function applyFilters() {
         group: document.getElementById("groupSelect").value,
         semester: document.getElementById("semesterSelect").value,
         lecture: document.getElementById("lectureSelect").value,
-        date: document.getElementById("dateSelect").value 
+        date: document.getElementById("dateSelect").value
     };
 
-    await fetch("/set_filters", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    });
-
-    await fetch("/reload_embeddings", { method: "POST" }); // ⭐ IMPORTANT
+    await Promise.all([
+        fetch("/set_filters", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        }),
+        fetch("/reload_embeddings", { method: "POST" })
+    ]);
 
     await loadStudents();
 }
@@ -394,10 +395,16 @@ const selects = [
 ];
 
 selects.forEach(s => {
-    s.addEventListener("change", () => {
+    let filterTimeout;
+
+s.addEventListener("change", () => {
+    clearTimeout(filterTimeout);
+
+    filterTimeout = setTimeout(() => {
         applyFilters();
-        updateBadge(); // ⭐ ADD THIS
-    });
+        updateBadge();
+    }, 300);
+});
 });
 
 // ---------------- LOAD STUDENTS ----------------
@@ -443,7 +450,16 @@ function renderTable(data) {
     }
 
     noRes.classList.add('hidden');
-    tbody.innerHTML = data.map(rowHTML).join('');
+    const fragment = document.createDocumentFragment();
+
+data.forEach(s => {
+    const temp = document.createElement('tbody');
+    temp.innerHTML = rowHTML(s);
+    fragment.appendChild(temp.firstElementChild);
+});
+
+tbody.innerHTML = '';
+tbody.appendChild(fragment);
 }
 
 // ---------------- STATS ----------------
@@ -573,10 +589,26 @@ window.addEventListener("DOMContentLoaded", () => {
         setActive(document.getElementById("btn-list"));
     }
 });
-// 🔥 AUTO REFRESH EVERY 3 SECONDS
-setInterval(async () => {
-    await loadStudents();
-}, 3000);
+async function updateAttendanceOnly() {
+    const res = await fetch('/get_students');
+    const data = await res.json();
+
+    data.students.forEach(newS => {
+        const oldS = students.find(s => s.roll === newS.roll);
+        if (!oldS) return;
+
+        if (oldS.status !== newS.status) {
+            oldS.status = newS.status;
+
+            const el = document.getElementById('badge-' + newS.roll);
+            if (el) el.innerHTML = badgeHTML(newS.status);
+        }
+    });
+
+    updateStats();
+}
+
+setInterval(updateAttendanceOnly, 5000);
 </script>
 </body>
 </html>
