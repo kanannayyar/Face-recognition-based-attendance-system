@@ -15,13 +15,9 @@ print("[INFO] Model loaded successfully!")
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ---------------- CAMERA ----------------
-camera = None
 
 # ---------------- FACE DETECTOR ----------------
-face_cascade = cv2.CascadeClassifier(
-    cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-)
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 
 # ---------------- DATABASE ----------------
 # client = MongoClient("mongodb://localhost:27017/")
@@ -173,118 +169,6 @@ def recognize_face(face_img):
 
     return None,best_sim
 
-
-# ---------------- VIDEO STREAM ----------------
-def gen_frames():
-
-    global camera
-    global last_name,last_similarity,last_seen_time
-
-    # reopen camera if stopped
-    if camera is None or not camera.isOpened():
-        camera = cv2.VideoCapture(0)
-
-    frame_count = 0
-
-    while True:
-
-        if camera is None:
-            break
-
-        success, frame = camera.read()
-
-        if not success:
-            break
-
-        frame = cv2.flip(frame,1)
-
-        gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-
-        faces = face_cascade.detectMultiScale(gray,1.2,6)
-
-        if len(faces) > 0:
-
-            x,y,w,h = max(faces,key=lambda b:b[2]*b[3])
-
-            face_img = frame[y:y+h,x:x+w]
-
-            frame_count += 1
-
-            # run recognition every 90 frames
-            if frame_count % 30 == 0:
-
-                name,sim = recognize_face(face_img)
-
-                if name:
-                    last_name = name
-                    last_similarity = sim
-                    last_seen_time = time.time()
-
-                    if not current_lecture or not current_user:
-                     print("No lecture/user set")
-                     continue
-
-                    doc = faces_collection.find_one({"user_name": name})
-                    if not doc:
-                     print("Student not found in DB")
-                     continue
-
-                    roll = doc.get("rollno")
-                    student_name = doc.get("name", name)
-
-                    today = datetime.now().strftime("%Y-%m-%d")
-                    time_now = datetime.now().strftime("%H:%M:%S")
-
-                    now = time.time()
-                    if name not in last_mark_time or now - last_mark_time[name] > 10:
-                        existing = attendance_collection.find_one({
-                         "student_id": roll,
-                         "lecture": current_lecture,
-                         "date": today,
-                         "faculty_email": current_user
-                        })
-                        if not existing:
-                            attendance_collection.insert_one({
-                             "student_id": roll,
-                             "name": student_name,
-                             "time": time_now,
-                             "date": today,
-                             "lecture": current_lecture,
-                             "faculty_email": current_user,
-                             "status": "present"
-                            })    
-                        last_mark_time[name] = now   # ✅ update time
-                        print(f"[DB] {student_name} marked")
-
-            # display cached result
-            if last_name and time.time()-last_seen_time < 3:
-
-                label=f"{last_name} ({last_similarity:.2f})"
-                color=(0,255,0)
-
-            else:
-
-                label="Unknown"
-                color=(0,0,255)
-
-            cv2.rectangle(frame,(x,y),(x+w,y+h),color,2)
-
-            cv2.putText(
-                frame,
-                label,
-                (x,y-10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                color,
-                2
-            )
-
-        ret,buffer=cv2.imencode('.jpg',frame)
-        frame=buffer.tobytes()
-
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n'+frame+b'\r\n')
-        time.sleep(0.03)
         
 # ---------------- ROUTES ----------------
 
@@ -345,27 +229,68 @@ def logout():
     session.pop("user",None)
     return redirect("/login")
 
+import base64
 
-@app.route('/video')
-def video():
+@app.route("/process_frame", methods=["POST"])
+def process_frame():
+    global last_name, last_similarity, last_seen_time
 
-    return Response(
-        gen_frames(),
-        mimetype='multipart/x-mixed-replace; boundary=frame'
-    )
+    data = request.json
+    image_data = data["image"]
 
+    # decode base64 image
+    encoded_data = image_data.split(",")[1]
+    nparr = np.frombuffer(base64.b64decode(encoded_data), np.uint8)
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-@app.route('/stop')
-def stop_camera():
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    global camera
+    faces = face_cascade.detectMultiScale(gray, 1.2, 6)
 
-    if camera is not None:
+    if len(faces) > 0:
+        x, y, w, h = max(faces, key=lambda b: b[2]*b[3])
+        face_img = frame[y:y+h, x:x+w]
 
-        camera.release()
-        camera = None
+        name, sim = recognize_face(face_img)
 
-    return "Camera stopped"
+        if name:
+            last_name = name
+            last_similarity = sim
+            last_seen_time = time.time()
+
+            # ✅ SAME attendance logic (copy from your gen_frames)
+            doc = faces_collection.find_one({"user_name": name})
+            if doc:
+                roll = doc.get("rollno")
+                student_name = doc.get("name", name)
+
+                today = datetime.now().strftime("%Y-%m-%d")
+                time_now = datetime.now().strftime("%H:%M:%S")
+
+                now = time.time()
+                if name not in last_mark_time or now - last_mark_time[name] > 10:
+
+                    existing = attendance_collection.find_one({
+                        "student_id": roll,
+                        "lecture": current_lecture,
+                        "date": today,
+                        "faculty_email": current_user
+                    })
+
+                    if not existing:
+                        attendance_collection.insert_one({
+                            "student_id": roll,
+                            "name": student_name,
+                            "time": time_now,
+                            "date": today,
+                            "lecture": current_lecture,
+                            "faculty_email": current_user,
+                            "status": "present"
+                        })
+
+                    last_mark_time[name] = now
+
+    return {"status": "processed"}
 
 @app.route("/get_recognition")
 def get_recognition():

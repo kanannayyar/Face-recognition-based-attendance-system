@@ -302,11 +302,14 @@ class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded
                 </div>
                 
                 <!-- Camera Display Area -->
-            <div class="bg-gray-900 rounded-xl aspect-video flex items-center justify-center">
+            <div class="bg-gray-900 rounded-xl aspect-video relative overflow-hidden">
 
-    <img id="cameraFeed" src="" class="w-full h-full object-cover rounded-xl hidden">
+    <video id="video" style="transform: scaleX(-1);" autoplay playsinline class="w-full h-full object-cover rounded-xl"></video>
+<canvas id="canvas" class="absolute top-0 left-0" style="transform: scaleX(-1);"></canvas>
+<canvas id="captureCanvas" style="display:none;"></canvas>
 
-    <div id="cameraPlaceholder" class="text-gray-400 text-center flex flex-col items-center">
+    <div id="cameraPlaceholder"
+     class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-center pointer-events-none">
         <p class="text-lg">Camera is off</p>
 
         <p class="text-sm">Click Start Camera</p>
@@ -346,33 +349,33 @@ class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded
 
 let cameraOn = false;
 
-function toggleCamera(){
+let stream = null;
 
-    const video = document.getElementById("cameraFeed");
+async function toggleCamera(){
+
+    const video = document.getElementById("video");
     const placeholder = document.getElementById("cameraPlaceholder");
     const button = document.getElementById("cameraBtn");
 
     if(!cameraOn){
 
-        video.src = "/video";   // Flask video route
-        video.classList.remove("hidden");
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
 
-        placeholder.style.display = "none";
-
+        placeholder.classList.add("hidden");   // ✅ HERE
         button.innerText = "Stop Camera";
 
         cameraOn = true;
 
     } else {
 
-        fetch("/stop");   // stop camera in Flask
+        if(stream){
+            stream.getTracks().forEach(track => track.stop());
+        }
 
-        video.src = "";
+        video.srcObject = null;
 
-        video.classList.add("hidden");
-
-        placeholder.style.display = "block";
-
+        placeholder.classList.remove("hidden"); // ✅ HERE
         button.innerText = "Start Camera";
 
         cameraOn = false;
@@ -597,6 +600,53 @@ window.addEventListener("DOMContentLoaded", () => {
         setActive(document.getElementById("btn-list"));
     }
 });
+
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const captureCanvas = document.getElementById("captureCanvas");
+const captureCtx = captureCanvas.getContext("2d");
+
+// send frame every 1 sec
+setInterval(async () => {
+
+    if(!cameraOn) return;
+    if(video.videoWidth === 0) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    captureCanvas.width = video.videoWidth;
+    captureCanvas.height = video.videoHeight;
+
+    captureCtx.drawImage(video, 0, 0);
+    const image = captureCanvas.toDataURL("image/jpeg",0.6);
+
+    const res = await fetch("/process_frame", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ image: image })
+    });
+
+    const data = await res.json();
+
+    // 🟩 DRAW ONLY BOX (no video inside canvas)
+    if(data.face){
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "lime";
+        ctx.rect(data.face.x, data.face.y, data.face.w, data.face.h);
+        ctx.stroke();
+    }
+
+}, 1500);
+
+
 </script>
 
 </body>
